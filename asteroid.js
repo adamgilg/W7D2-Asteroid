@@ -35,32 +35,6 @@ var AsteroidGame = (function() {
 
   }
 
-  function Ship(x, y, game) {
-    var that = this;
-    that.posX = x;
-    that.posY = y;
-
-    that.draw = function(ctx) {
-      ctx.fillStyle = "blue";
-      ctx.beginPath();
-      ctx.arc(that.posX, that.posY, 10, 0, Math.PI*2, false)
-      ctx.fill();
-    };
-
-    that.isHit = function() {
-
-      return _.some(game.asteroids, function(ast) {
-        var distance = Math.sqrt(Math.pow((that.posX - ast.posX), 2) + Math.pow((that.posY - ast.posY), 2));
-        if (distance < (10 + ast.radius)) {
-          console.log("A HIT");
-          return true;
-        } else {
-          return false;
-        }
-      });
-
-    };
-  }
 
   Asteroid.randomAsteroid = function() {
 
@@ -72,6 +46,39 @@ var AsteroidGame = (function() {
 
     return new Asteroid(posX, posY, 20, 'red', velocity)
   }
+
+
+  function Ship(x, y, game) {
+    var that = this;
+    that.posX = x;
+    that.posY = y;
+    that.velocity = [-2, -2]
+
+    that.draw = function(ctx) {
+      ctx.fillStyle = "blue";
+      ctx.beginPath();
+      ctx.arc(that.posX, that.posY, 10, 0, Math.PI*2, false)
+      ctx.fill();
+    };
+
+    that.isHit = function() {
+      return _.some(game.asteroids, function(ast) {
+        var distance = Math.sqrt(Math.pow((that.posX - ast.posX), 2) + Math.pow((that.posY - ast.posY), 2));
+        if (distance < (10 + ast.radius)) {
+          console.log("A HIT");
+          return true;
+        } else {
+          return false;
+        }
+      });
+    };
+
+    that.update = function() {
+      that.posX += that.velocity[0];
+      that.posY += that.velocity[1];
+    };
+  }
+
 
   function Game(ctx) {
     var that = this;
@@ -101,6 +108,7 @@ var AsteroidGame = (function() {
           that.asteroids = _.without(that.asteroids, asteroid);
         }
       })
+      that.ship.update()
 
       if (that.ship.isHit()) {
         alert("GAME OVER")
@@ -110,14 +118,14 @@ var AsteroidGame = (function() {
 
     that.start = function() {
       intervalTimer = setInterval(function() {
-        that.draw();
         that.update();
+        that.draw();
       }, 1000/40);
     };
 
     that.stop = function() {
       clearInterval(intervalTimer);
-    }
+    };
   }
 
 
