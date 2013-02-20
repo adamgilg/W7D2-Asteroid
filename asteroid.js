@@ -1,84 +1,122 @@
 var AsteroidGame = (function() {
   function Asteroid(x, y, radius, color, velocity) {
     var that = this;
-    this.posx = x;
-    this.posy = y;
-    this.radius = radius;
-    this.color = color;
-    this.velocity = velocity;
-// this offscreen method does not work yet
-    this.offScreen = function() {
-      if (that.posx > 600 || that.posx < 0) {
+    that.posX = x;
+    that.posY = y;
+    that.radius = radius;
+    that.color = color;
+    that.velocity = velocity;
+// that offscreen method does not work yet
+    that.offScreen = function() {
+      if (that.posX > 600 || that.posX < 0) {
         return true
       }
-      else if (that.posy > 600 || that.posy < 0) {
+      else if (that.posY > 600 || that.posY < 0) {
+
         return true
       }
       else {
-        return false
+        return false;
       }
     }
 
 
-    this.draw = function(ctx) {
+    that.draw = function(ctx) {
       ctx.fillStyle = that.color;
       ctx.beginPath();
-      ctx.arc(that.posx, that.posy, that.radius, 0, Math.PI*2, false);
+      ctx.arc(that.posX, that.posY, that.radius, 0, Math.PI*2, false);
       ctx.fill();
     };
 
-    this.update = function() {
-      that.posx += that.velocity[0];
-      that.posy += that.velocity[1];
+    that.update = function() {
+      that.posX += that.velocity[0];
+      that.posY += that.velocity[1];
     }
 
+  }
+
+  function Ship(x, y, game) {
+    var that = this;
+    that.posX = x;
+    that.posY = y;
+
+    that.draw = function(ctx) {
+      ctx.fillStyle = "blue";
+      ctx.beginPath();
+      ctx.arc(that.posX, that.posY, 10, 0, Math.PI*2, false)
+      ctx.fill();
+    };
+
+    that.isHit = function() {
+
+      return _.some(game.asteroids, function(ast) {
+        var distance = Math.sqrt(Math.pow((that.posX - ast.posX), 2) + Math.pow((that.posY - ast.posY), 2));
+        if (distance < (10 + ast.radius)) {
+          console.log("A HIT");
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+    };
   }
 
   Asteroid.randomAsteroid = function() {
 
-    var posx = Math.floor((Math.random()*600)+1);
-    var posy = Math.floor((Math.random()*600)+1);
+    var posX = Math.floor((Math.random()*600)+1);
+    var posY = Math.floor((Math.random()*600)+1);
     var veloX = (Math.random()*10)-5;
     var veloY = (Math.random()*10)-5;
     var velocity = [veloX, veloY]
 
-    return new Asteroid(posx, posy, 20, 'red', velocity)
+    return new Asteroid(posX, posY, 20, 'red', velocity)
   }
 
   function Game(ctx) {
     var that = this;
-    this.asteroids = [];
+    that.asteroids = [];
+    that.ship = new Ship(300, 300, that);
+    var intervalTimer = null;
 
-
-    this.initialize = function() {
+    that.initialize = function() {
       for (var i = 0; i < 10; i++) {
         var ast = Asteroid.randomAsteroid();
         that.asteroids.push(ast);
       }
     };
 
-    this.draw = function(ast) {
+    that.draw = function(ast) {
       ctx.clearRect(0, 0, 600, 600)
       that.asteroids.forEach(function(ast) {
         ast.draw(ctx);
       })
+      that.ship.draw(ctx);
     };
 
-    this.update = function() {
+    that.update = function() {
       that.asteroids.forEach(function(asteroid) {
         asteroid.update();
-        // if (asteroid.offScreen) {
-        //   // not sure how to be removing these yet - offScreen is not currently functional
-        //   // that.asteroids.remove(i)
-        // }
+        if (asteroid.offScreen()) {
+          that.asteroids = _.without(that.asteroids, asteroid);
+        }
       })
+
+      if (that.ship.isHit()) {
+        alert("GAME OVER")
+        that.stop();
+      }
     };
 
-    this.start = function() {
-      setInterval(function() {
-        that.update();
+    that.start = function() {
+      intervalTimer = setInterval(function() {
         that.draw();
+        that.update();
       }, 1000/40);
+    };
+
+    that.stop = function() {
+      clearInterval(intervalTimer);
     }
   }
 
